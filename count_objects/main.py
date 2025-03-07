@@ -28,7 +28,7 @@ def count_objects(image):
 
 
 #Загружаем и обрабатываем
-image = np.load('example1.txt')
+image = np.load('example1.npy')
 if image.ndim == 3:
     image = image[:, :, 0] #Возьмем первый канал, если файл многоканальный
 if not np.all(np.isin(image, [0, 1])):
