@@ -13,31 +13,38 @@ def match(a, masks):
 
 #Немного доработанная функция подсчета фигур
 def count_objects(image):
-    padded = np.pad(image, ((1, 1), (1, 1)))
     E = 0
-    for y in range(0, padded.shape[0] - 1):
-        for x in range(0, padded.shape[1] - 1):
-            sub = padded[y : y + 2, x : x + 2]
+    for y in range(0, image.shape[0] - 1):
+         for x in range(0, image.shape[1] - 1):
+            sub = image[y : y + 2, x : x + 2]
             if match(sub, external):
-                E += 1
+                 E += 1
             elif match(sub, internal):
-                E -= 1
+                 E -= 1
             elif match(sub, cross):
-                E += 2
+                 E += 2
     return E / 4
 
 
 #Загружаем и обрабатываем
 
-image = np.load('example1.npy')
-if image.ndim == 3:
-    image = image[:, :, 0] #Возьмем первый канал, если файл многоканальный
-if not np.all(np.isin(image, [0, 1])):
-    image = (image > 0).astype(np.uint8) #Приводим к бинарному виду
-num_objects = count_objects(image)
-print(f"Количество объектов: {num_objects}")
+image = np.load("example1.npy")
+image[image > 0] = 1
+count_objects_ex1 = count_objects(image)
 
-# Визуализация
-plt.imshow(image, cmap='gray')
-plt.title(f"Objects: {num_objects}")
+plt.subplot(121)
+plt.title(f"Objects: {count_objects_ex1}")
+plt.imshow(image)
+
+image = np.load("example2.npy")
+count_objects_ex2 = 0
+image[image > 0] = 1
+for i in range(image.shape[-1]):
+    count_objects_ex2 += count_objects(image[:,:,i])
+
+plt.subplot(122)
+plt.title(f"Objects: {count_objects_ex2}")
+plt.imshow(image)
+
+print(f"count objects in ex1: {count_objects_ex1}, in ex2: {count_objects_ex2}")
 plt.show()
