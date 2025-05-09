@@ -17,11 +17,11 @@ def recvall(sock, n):
 
 def get_two_brightest_local_maxima(img, size=3):
     max_filt = maximum_filter(img, size=size)
-    mask = (img == max_filt)  # локальные максимумы
+    mask = (img == max_filt)  # local maxima
 
     labeled, num_features = label(mask)
     if num_features < 2:
-        raise ValueError("Меньше двух локальных максимумов")
+        raise ValueError("Less than two local maxima")
 
     centers = center_of_mass(img, labeled, range(1, num_features + 1))
 
@@ -56,7 +56,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.send(b"get")
         bts = recvall(sock, 40002)
         if not bts:
-            print("Ошибка получения изображения")
+            print("Error receiving image")
             break
 
         height, width = bts[0], bts[1]
@@ -69,14 +69,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
 
         sock.send(str(distance).encode())
         response = sock.recv(10).decode()
-        print(f"[{i + 1}/10] Расстояние: {distance}, Ответ: {response}")
+        print(f"[{i + 1}/10] Distance: {distance}, Response: {response}")
 
 
         plt.clf()
         plt.imshow(im1, cmap='viridis')
         if p1 and p2:
             plt.scatter([p1[1], p2[1]], [p1[0], p2[0]], c='red', s=50)
-        plt.title(f"Расстояние: {distance}")
+        plt.title(f"Distance: {distance}")
         plt.pause(1)
 
         sock.send(b"beat")
