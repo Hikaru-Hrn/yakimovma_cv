@@ -1,49 +1,38 @@
 import cv2
+import numpy as np
 
 video_path = "output.avi"
-reference_image_path = "14123/pleskunov.png"
+template_path = "pleskunov.png"
 
-ref_img = cv2.imread(reference_image_path, cv2.IMREAD_GRAYSCALE)
-orb = cv2.ORB_create(nfeatures=1000)
-kp_ref, des_ref = orb.detectAndCompute(ref_img, None)
+MATCH_THRESHOLD = 0.6
+SCALE = 1.25
 
-bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-
-GOOD_MATCHES_THRESHOLD = 20
-FRAME_DIFF = 10
-FRAME_STEP = 5
+template_orig = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
+template = cv2.resize(template_orig, (0, 0), fx=SCALE, fy=SCALE)
+w, h = template.shape[::-1]
 
 cap = cv2.VideoCapture(video_path)
-frame_count = 0
-match_frames = []
 
-while cap.isOpened():
+match_count = 0
+frame_id = 0
+
+while True:
     ret, frame = cap.read()
     if not ret:
         break
 
-    frame_count += 1
-    if frame_count % FRAME_STEP != 0:
+    frame_id += 1
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    if gray_frame.shape[0] < template.shape[0] or gray_frame.shape[1] < template.shape[1]:
         continue
 
-    scale_factor = 640 / frame.shape[1] if frame.shape[1] > 640 else 1.0
-    if scale_factor < 1.0:
-        frame = cv2.resize(frame, None, fx=scale_factor, fy=scale_factor)
+    res = cv2.matchTemplate(gray_frame, template, cv2.TM_CCOEFF_NORMED)
+    loc = np.where(res >= MATCH_THRESHOLD)
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    kp_frame, des_frame = orb.detectAndCompute(gray, None)
-
-    if des_frame is None:
-        continue
-
-    matches = bf.match(des_ref, des_frame)
-    good_matches = sorted(matches, key=lambda x: x.distance)[:GOOD_MATCHES_THRESHOLD]
-
-    if len(good_matches) >= GOOD_MATCHES_THRESHOLD:
-        if not match_frames or frame_count - match_frames[-1] > FRAME_DIFF:
-            match_frames.append(frame_count)
+    if len(loc[0]) > 0:
+        match_count += 1
+        print(f"Найдено совпадение на кадре {frame_id}")
 
 cap.release()
-
-print(f"Количество появлений изображения: {len(match_frames)}")
-print(f"Кадры с совпадениями: {match_frames}")
+print(f"\n🔍 Общее количество совпадений: {match_count}")
